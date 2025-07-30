@@ -15,28 +15,41 @@ type counter map[string]int
 // solution start
 
 // countDigitsInWords counts the number of digits in the words of a phrase.
-func countDigitsInWords(phrase string) counter {
-    words := strings.Fields(phrase)
-    counted := make(chan int)
+func countDigitsInWords(next func() string) counter {
+	type pair struct {
+		word  string
+		count int
+	}
+	counted := make(chan pair)
 
-    go func() {
-        for _, word := range words {
+	// count digits in words
+	go func() {
+		for {
+			// should return when
+			// there are no more words
+			word := next()
+			if word == "" {
+				counted <- pair{"", 0}
+				return
+			}
 			count := countDigits(word)
-			counted <-count
+			counted <- pair{word, count}
 		}
-    }()
-	
-	stats := make(map[string]int)
-	for _, word := range words {
-		stats[word] = <-counted
-	} 
-    // Read values from the counted channel
-    // and fill stats.
+	}()
 
-    // As a result, stats should contain words
-    // and the number of digits in each.
-
-    return stats
+	// fill stats by words
+	stats := counter{}
+	for {
+		countPair := <-counted
+		// how to break from the loop
+		// when there are no more words?
+		if countPair.word == "" {
+			break
+		}
+		// where should the word come from?
+		stats[countPair.word] = countPair.count
+	}
+	return stats
 }
 
 // solution end
@@ -69,8 +82,23 @@ func printStats(stats counter) {
 	}
 }
 
+// wordGenerator returns a generator that yields words from a phrase.
+func wordGenerator(phrase string) func() string {
+    words := strings.Fields(phrase)
+    idx := 0
+    return func() string {
+        if idx == len(words) {
+            return ""
+        }
+        word := words[idx]
+        idx++
+        return word
+    }
+}
+
 func main() {
 	phrase := "0ne 1wo thr33 4068"
-	counts := countDigitsInWords(phrase)
+	next := wordGenerator(phrase)
+	counts := countDigitsInWords(next)
 	printStats(counts)
 }
