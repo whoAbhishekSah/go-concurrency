@@ -19,27 +19,35 @@ type pair struct {
 	count int
 }
 
-func submitWords(next func() string, pending chan<- string) {
-	for {
-		word := next()
-		pending <- word
-		if word == "" {
-			return
+func submitWords(next func() string) chan string {
+	pending := make(chan string)
+	go func() {
+		for {
+			word := next()
+			pending <- word
+			if word == "" {
+				return
+			}
 		}
-	}
+	}()
+	return pending
 }
 
-func countWords(pending <-chan string, counted chan<- pair) {
-	for {
-		// should return when
-		// there are no more words
-		word := <-pending
-		if word == "" {
-			counted <- pair{"", 0}
-			return
+func countWords(pending <-chan string) chan pair {
+	counted := make(chan pair)
+	go func() {
+		for {
+			// should return when
+			// there are no more words
+			word := <-pending
+			if word == "" {
+				counted <- pair{"", 0}
+				return
+			}
+			counted <- pair{word, countDigits(word)}
 		}
-		counted <- pair{word, countDigits(word)}
-	}
+	}()
+	return counted
 }
 
 func fillStats(counted <-chan pair) counter {
@@ -59,12 +67,11 @@ func fillStats(counted <-chan pair) counter {
 
 // countDigitsInWords counts the number of digits in the words of a phrase.
 func countDigitsInWords(next func() string) counter {
-	pending := make(chan string)
-	go submitWords(next, pending)
-
-	counted := make(chan pair)
-	go countWords(pending, counted)
-
+	// Returning an output channel from a function and
+	// filling it within an internal goroutine
+	// is a common pattern in Go.
+	pending := submitWords(next)
+	counted := countWords(pending)
 	return fillStats(counted)
 }
 
