@@ -20,20 +20,32 @@ func countDigitsInWords(next func() string) counter {
 		word  string
 		count int
 	}
+
+	pending := make(chan string)
 	counted := make(chan pair)
+
+	// sends words to be counted
+	go func() {
+		for {
+			word := next()
+			pending <- word
+			if word == "" {
+				return
+			}
+		}
+	}()
 
 	// count digits in words
 	go func() {
 		for {
 			// should return when
 			// there are no more words
-			word := next()
+			word := <-pending
 			if word == "" {
 				counted <- pair{"", 0}
 				return
 			}
-			count := countDigits(word)
-			counted <- pair{word, count}
+			counted <- pair{word, countDigits(word)}
 		}
 	}()
 
@@ -84,16 +96,16 @@ func printStats(stats counter) {
 
 // wordGenerator returns a generator that yields words from a phrase.
 func wordGenerator(phrase string) func() string {
-    words := strings.Fields(phrase)
-    idx := 0
-    return func() string {
-        if idx == len(words) {
-            return ""
-        }
-        word := words[idx]
-        idx++
-        return word
-    }
+	words := strings.Fields(phrase)
+	idx := 0
+	return func() string {
+		if idx == len(words) {
+			return ""
+		}
+		word := words[idx]
+		idx++
+		return word
+	}
 }
 
 func main() {
