@@ -14,42 +14,35 @@ type counter map[string]int
 
 // solution start
 
-// countDigitsInWords counts the number of digits in the words of a phrase.
-func countDigitsInWords(next func() string) counter {
-	type pair struct {
-		word  string
-		count int
+type pair struct {
+	word  string
+	count int
+}
+
+func submitWords(next func() string, pending chan<- string) {
+	for {
+		word := next()
+		pending <- word
+		if word == "" {
+			return
+		}
 	}
+}
 
-	pending := make(chan string)
-	counted := make(chan pair)
-
-	// sends words to be counted
-	go func() {
-		for {
-			word := next()
-			pending <- word
-			if word == "" {
-				return
-			}
+func countWords(pending <-chan string, counted chan<- pair) {
+	for {
+		// should return when
+		// there are no more words
+		word := <-pending
+		if word == "" {
+			counted <- pair{"", 0}
+			return
 		}
-	}()
+		counted <- pair{word, countDigits(word)}
+	}
+}
 
-	// count digits in words
-	go func() {
-		for {
-			// should return when
-			// there are no more words
-			word := <-pending
-			if word == "" {
-				counted <- pair{"", 0}
-				return
-			}
-			counted <- pair{word, countDigits(word)}
-		}
-	}()
-
-	// fill stats by words
+func fillStats(counted <-chan pair) counter {
 	stats := counter{}
 	for {
 		countPair := <-counted
@@ -62,6 +55,17 @@ func countDigitsInWords(next func() string) counter {
 		stats[countPair.word] = countPair.count
 	}
 	return stats
+}
+
+// countDigitsInWords counts the number of digits in the words of a phrase.
+func countDigitsInWords(next func() string) counter {
+	pending := make(chan string)
+	go submitWords(next, pending)
+
+	counted := make(chan pair)
+	go countWords(pending, counted)
+
+	return fillStats(counted)
 }
 
 // solution end
