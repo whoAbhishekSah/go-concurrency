@@ -119,7 +119,7 @@ func wordGenerator(phrase string) func() string {
 	}
 }
 
-func main() {
+func main_bak() {
 	phrase := "0ne 1wo thr33 4068"
 	next := wordGenerator(phrase)
 	counts := countDigitsInWords(next)
