@@ -5,25 +5,24 @@ import (
 	"strings"
 )
 
-const eof = "__EOF__"
-
-func main(){
+func main() {
 	str := "one,two,,four"
 	in := make(chan string)
-	go func(){
+	go func() {
 		words := strings.Split(str, ",")
 		for _, word := range words {
 			in <- word
 		}
-		in <- eof
+		close(in)
 	}()
 
 	for {
-		word := <- in
-		if word == eof {
+		word, ok := <-in
+		if !ok {
+			//channel closed
 			break
 		}
-		if word != ""{
+		if word != "" {
 			fmt.Printf("%s ", word)
 		}
 	}
