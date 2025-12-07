@@ -24,9 +24,11 @@ func submitWords(next func() string) chan string {
 	go func() {
 		for {
 			word := next()
-			pending <- word
-			if word == "" {
-				return
+			if word != "" {
+				pending <- word
+			} else {
+				close(pending)
+				break
 			}
 		}
 	}()
@@ -36,30 +38,17 @@ func submitWords(next func() string) chan string {
 func countWords(pending <-chan string) chan pair {
 	counted := make(chan pair)
 	go func() {
-		for {
-			// should return when
-			// there are no more words
-			word := <-pending
-			if word == "" {
-				counted <- pair{"", 0}
-				return
-			}
+		for word := range pending {
 			counted <- pair{word, countDigits(word)}
 		}
+		close(counted)
 	}()
 	return counted
 }
 
 func fillStats(counted <-chan pair) counter {
 	stats := counter{}
-	for {
-		countPair := <-counted
-		// how to break from the loop
-		// when there are no more words?
-		if countPair.word == "" {
-			break
-		}
-		// where should the word come from?
+	for countPair := range counted {
 		stats[countPair.word] = countPair.count
 	}
 	return stats
