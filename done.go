@@ -16,7 +16,7 @@ func say(done chan<- struct{}, id int, phrase string) {
 	done <- struct{}{}
 }
 
-func main() {
+func main_bak_3() {
 	phrases := []string{
 		"go is awesome",
 		"cats are cute",
