@@ -13,6 +13,24 @@ func await(fn func() any) any {
 	return <-out
 }
 
+// gather runs all passed functions concurrently
+// and returns the results when they are ready.
+func gather(funcs []func() any) []any {
+	res := make([]any, len(funcs))
+	done := make(chan struct{})
+	for idx, fn := range funcs{
+		go func(){
+			res[idx] = fn()
+			done <- struct{}{}
+		}()
+	}
+	for range funcs {
+		<-done
+	}
+	return res
+}
+
+
 func main() {
 	slowpoke := func() any {
 		fmt.Print("I'm so..& ")
