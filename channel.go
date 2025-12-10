@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func main() {
+func main_bak_1() {
 	str := "one,two,,four"
 	stream := make(chan string)
 	go submit(str, stream)
