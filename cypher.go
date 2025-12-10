@@ -43,7 +43,7 @@ func receiver(in <-chan string) []string {
 	return res
 }
 
-func main() {
+func main_bak_2() {
 	src := "go is awesome"
 	res := encode(src)
 	fmt.Println(res)
