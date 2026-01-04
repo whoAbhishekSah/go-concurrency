@@ -43,7 +43,7 @@ func squared(n int) func() any {
 	}
 }
 
-func main() {
+func main_bak_4() {
 	funcs := []func() any{squared(2), squared(3), squared(4)}
 
 	start := time.Now()

@@ -1,0 +1,8 @@
+2024-01-04 10:00:01 [INFO] Starting application service...
+2024-01-04 10:00:02 [INFO] Connected to Database (5ms)
+2024-01-04 10:00:05 [ERROR] Connection reset by peer (DB_01)
+2024-01-04 10:00:06 [WARN] Retrying connection in 1s...
+2024-01-04 10:00:07 [ERROR] Failed to reconnect: timeout after 5000ms
+2024-01-04 10:00:08 [INFO] Cache cleared successfully
+2024-01-04 10:00:09 [ERROR] Disk space critical: /var/log is 98% full
+2024-01-04 10:00:10 [INFO] Shutting down gracefully
