@@ -5,16 +5,28 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
+	"time"
 )
 
 const (
 	ErrMatchSubstr = "[ERROR]"
+	MaxWorker      = 3
 )
 
 func aggregateLog(filepath string) int {
-	pending := reader(filepath)       // return a channel where each line is written line by line
-	collector := transformer(pending) // returns a channel where the only the error lines are put
-	return sinker(collector)          // counts the error lines
+	pending := reader(filepath) // return a channel where each line is written line by line
+	collector := make(chan string)
+	wg := &sync.WaitGroup{}
+	for i := range MaxWorker {
+		wg.Add(1)
+		go transformer(i, pending, collector, wg)
+	}
+	go func() {
+		wg.Wait()
+		close(collector)
+	}()
+	return sinker(collector) // counts the error lines
 }
 
 func reader(filepath string) <-chan string {
@@ -39,19 +51,17 @@ func reader(filepath string) <-chan string {
 	return pending
 }
 
-func transformer(pending <-chan string) <-chan string {
-	collector := make(chan string)
-	go func() {
-		for checkStr := range pending {
-			if strings.Contains(checkStr, ErrMatchSubstr) {
-
-				collector <- checkStr
-			}
-
+func transformer(id int, pending <-chan string, collector chan<- string, wg *sync.WaitGroup) {
+	fmt.Printf("staring worker %d\n", id)
+	defer wg.Done()
+	for checkStr := range pending {
+		if strings.Contains(checkStr, ErrMatchSubstr) {
+			// Simulate expensive processing (e.g., resizing an image)
+			collector <- checkStr
+			time.Sleep(500 * time.Millisecond)
+			fmt.Printf("Worker %d finished str processing %s\n", id, checkStr)
 		}
-		close(collector)
-	}()
-	return collector
+	}
 }
 
 // The final stage (sinker) must act as the barrier.
@@ -60,7 +70,6 @@ func transformer(pending <-chan string) <-chan string {
 func sinker(collector <-chan string) int {
 	i := 0
 	for range collector {
-
 		i += 1
 	}
 	return i
