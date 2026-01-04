@@ -16,6 +16,11 @@ const (
 
 func aggregateLog(filepath string) int {
 	pending := reader(filepath) // return a channel where each line is written line by line
+	collector := transformDispatcher(pending)
+	return sinker(collector) // counts the error lines
+}
+
+func transformDispatcher(pending <-chan string) <-chan string {
 	collector := make(chan string)
 	wg := &sync.WaitGroup{}
 	for i := range MaxWorker {
@@ -26,7 +31,7 @@ func aggregateLog(filepath string) int {
 		wg.Wait()
 		close(collector)
 	}()
-	return sinker(collector) // counts the error lines
+	return collector
 }
 
 func reader(filepath string) <-chan string {
@@ -59,7 +64,7 @@ func transformer(id int, pending <-chan string, collector chan<- string, wg *syn
 			// Simulate expensive processing (e.g., resizing an image)
 			collector <- checkStr
 			time.Sleep(500 * time.Millisecond)
-			fmt.Printf("Worker %d finished str processing %s\n", id, checkStr)
+			fmt.Printf("Worker %d finished str processing\n", id)
 		}
 	}
 }
