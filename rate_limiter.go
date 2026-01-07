@@ -39,6 +39,25 @@ func generator(ctx context.Context) <-chan int {
 func limiter(ctx context.Context, in <-chan int, interval time.Duration) <-chan int {
 	out := make(chan int)
 	ticker := time.NewTicker(interval)
+	tokens := make(chan int, 3)
+	tokens <- 0
+	tokens <- 0
+	tokens <- 0
+	// add 1 token each interval
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				select {
+				case <-ctx.Done():
+					return
+				case tokens <- 0:
+				}
+			}
+		}
+	}()
 	go func() {
 		defer close(out)
 		defer ticker.Stop()
@@ -46,19 +65,19 @@ func limiter(ctx context.Context, in <-chan int, interval time.Duration) <-chan 
 			select {
 			case <-ctx.Done():
 				return
-			case item, ok := <-in:
-				if !ok {
-					return
-				}
+			case <-tokens: // we have tokens left in our bucket
 				select {
-				case <-ticker.C:
+				case <-ctx.Done():
+					return
+				case item, ok := <-in:
+					if !ok {
+						return
+					}
 					select {
 					case <-ctx.Done():
 						return
 					case out <- item:
 					}
-				case <-ctx.Done():
-					return
 				}
 			}
 		}
