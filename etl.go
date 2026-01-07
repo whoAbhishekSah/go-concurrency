@@ -104,7 +104,7 @@ func sinker(collector <-chan string) int {
 	return i
 }
 
-func main() {
+func main_bak_5() {
 	ctx, _ := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	fmt.Println(aggregateLog(ctx, "./app.log"))
 }
