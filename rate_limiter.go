@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func main() {
+func main_bak_6() {
 	// We want 5 req/sec = 1 req every 200ms
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
