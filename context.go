@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"time"
 )
 
@@ -27,18 +26,10 @@ func work() int{
 	return 42
 }
 
-func maybeCancel(cancel func()){
-	time.Sleep(50 * time.Millisecond)
-	if rand.Float32() < 0.5 {
-		cancel()
-	}
-}
-
 func main(){
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
+	timeout := 42 * time.Millisecond
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	go maybeCancel(cancel)
 	
 	res, err := execute(ctx, work)
 	fmt.Println(res, err)
