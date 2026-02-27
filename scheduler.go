@@ -38,7 +38,7 @@ func schedule(dur time.Duration, fn func()) func() {
 	return cancelFn
 }
 
-func main() {
+func main_bak_7() {
 	work := func() {
 		at := time.Now()
 		time.Sleep(60 * time.Millisecond)
