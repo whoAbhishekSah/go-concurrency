@@ -26,7 +26,7 @@ func work() int{
 	return 42
 }
 
-func main(){
+func main_bak_8(){
 	timeout := 42 * time.Millisecond
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
